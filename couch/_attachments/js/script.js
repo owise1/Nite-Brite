@@ -4,16 +4,17 @@ function hexToB(h) {return parseInt((cutHex(h)).substring(4,6),16)}
 function cutHex(h) {return (h.charAt(0)=="#") ? h.substring(1,7):h}
 
 function PixelHandler(){
-	var db      = $.couch.db("pixels");
-	this.db     = db;
-	var max     = 10000;
-	var colors = [];
+	var db          = $.couch.db("pixels");
+	this.db         = db;
+	var max         = 10000;
+	var queue_limit = 10;
+	var colors      = [];
 	
 	function _get_canvas(){
 		return $('#stage')[0];
 	}
 	
-	// x,y,r,b,g
+	// x,y,r,g,b,timestamp,lat,lon
 	var _draw_color = function(info){
 		if(typeof info == 'string')	info = info.split(',');
 		var x = info[0];
@@ -30,19 +31,24 @@ function PixelHandler(){
 	}
 	this.draw_color = _draw_color;
 	
+	var _color_queue = [];
 	var _push_color = function(info){
 		var time = new Date;
 		var infoStr = info.join(',');
 		var d = { 
-			"_id" : infoStr + '-' + time.getTime(),
+			"_id" : infoStr + ',' + time.getTime() + ',' + lat + ',' + lon,
 			type : "pixel",
 			info : info
 		}
-		this.db.saveDoc(d, {
-			error : function(response){
-				
-			}
-		});
+		_color_queue.push(d);
+		if(_color_queue.length >= queue_limit){
+			this.db.bulkSave({ "docs" : _color_queue }, {
+				error : function(response){
+
+				}
+			});
+			_color_queue = [];
+		}
 		colors.push(infoStr);
 		_draw_all();
 	}
@@ -77,18 +83,21 @@ function PixelHandler(){
 		do_dot();
 	}
 	
-	// init
+	//****// init //****//
+	
+	// get pixels and draw it
 	db.view("couch/pixels", {
 		reduce : false,
 		success : function(response){
 			$.each(response.rows, function(i, row){
-				var pieces = row.id.split('-');
-				colors.push(pieces[0]);
+				colors.push(row.id);
 			})
-			_animate_10K();
+			_draw_all();
+			// _animate_10K();
 		}
 	})
 	
+	// changes
 	this.db.changes().onChange(function(data){
 		if(data.results){
 			$.each(data.results, function(i, obj){
@@ -103,6 +112,14 @@ function PixelHandler(){
 		}
 	})
 	
+	// get location
+	if (navigator.geolocation) {
+		var lat, lon;
+		navigator.geolocation.getCurrentPosition(function(position){
+			lat = position.coords.latitude;
+			lon = position.coords.longitude;
+		});
+	}
 
 	
 
