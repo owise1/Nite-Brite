@@ -7,7 +7,7 @@ Nite-Brite is a picture that everyone is drawing at the same time.
 + Click to add a pixel
 + *Or* sit back and watch what everyone else is drawing
 
-[Here's an example](http://owise1.cloudant.com/pixels/_design/couch/index.html)
+[Here's an example](http://exuberated.com/nite-brite)
 
 Nerd Words
 ----------
