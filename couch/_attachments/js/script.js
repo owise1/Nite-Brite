@@ -7,7 +7,7 @@ function PixelHandler(){
 	var db          = $.couch.db("pixels");
 	this.db         = db;
 	var max         = 10000;
-	var queue_limit = 10;
+	var queue_limit = 3;
 	var colors      = [];
 	
 	function _get_canvas(){
@@ -64,7 +64,7 @@ function PixelHandler(){
 		ctx.clearRect(0,0,$('#stage').attr('width'),$('#stage').height());
 		
 		$.each(colors, function(i,info){
-			if(colors.length > max && i < colors.length - max) return;
+			// if(colors.length > max && i < colors.length - max) return;
 			_draw_color(info);
 		});
 		

@@ -14,9 +14,14 @@
 	
 	<link rel="stylesheet" href="style.css?v=2">
 	<link rel="stylesheet" href="farbtastic.css">
+	<link rel="stylesheet" href="css/trontastic/jquery-ui-1.8.16.custom.css">
 
 </head>
 <body>
+	<div id="dialog-message" title="Welcome to Nite Brite!" style='display:none'>
+		<p>Choose a color using the color picker on the bottom right, then start clicking!</p>
+		<p>If you see dots appearing that you didn't do, that's someone else drawing too!</p>
+	</div>
 	<div id="stage_holder"></div>
 	<form style='display:none'><input type="text" id="color" name="color" value="#123456" /></form>
 	<div id="colorpicker"></div>
@@ -24,6 +29,7 @@
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
 	<script>!window.jQuery && document.write(unescape('%3Cscript src="js/libs/jquery-1.7.min.js"%3E%3C/script%3E'))</script>
 	<script src="js/jquery.couch.js"></script>
+	<script src="js/jquery-ui-1.8.16.custom.min.js"></script>
 	<script src="js/farbtastic.js"></script>
 	<script src="js/script.js"></script>
 	<script type='text/javascript' charset='utf-8'>
@@ -43,6 +49,11 @@
 				ph.push_color([x,y,r,g,b]);
 			});
 			$('#colorpicker').farbtastic('#color');
+			
+			$( "#dialog-message" ).dialog({	modal: true	});
+			$('.ui-widget-overlay').click(function(){
+				$( "#dialog-message" ).dialog("close");
+			});
 			
 		})
 	</script>
