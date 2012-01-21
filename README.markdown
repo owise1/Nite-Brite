@@ -19,4 +19,4 @@ x,y,r,g,b,timestamp in milliseconds,latitude,longitude
 
 *Ex:* `230,311,18,52,86,1325962878384,37.8087081,-122.2467254`
 
-All of the parameters up the timestamp are required, the location info is optional.  The timestamp is useful because it creates a history for the drawing and encourages collaborators because their additions will not simply be overwritten.  Location is in there because it allows us to subdivide the drawing further.
+All of the parameters up to the timestamp are required, the location info is optional.  The timestamp is useful because it creates a history for the drawing and encourages collaborators because their additions will not simply be overwritten.  Location is in there because it allows us to subdivide the drawing further.
