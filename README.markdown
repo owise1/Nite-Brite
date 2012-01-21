@@ -15,7 +15,7 @@ Nerd Words
 Nite-Brite is a couchapp that enables collaboration on a single pixel-drawing in real-time. 
 Each pixel is a couchdb document with an _id in this scheme:
 
-x,y,r,g,b,timestamp in millisecond,latitude,longitude
+x,y,r,g,b,timestamp in milliseconds,latitude,longitude
 
 *Ex:* `230,311,18,52,86,1325962878384,37.8087081,-122.2467254`
 

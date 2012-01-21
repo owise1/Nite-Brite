@@ -33,21 +33,11 @@
 	<script src="js/farbtastic.js"></script>
 	<script src="js/script.js"></script>
 	<script type='text/javascript' charset='utf-8'>
-		var ph = new PixelHandler;
 		
-		$(window).resize(ph.draw_all).resize();
 
 		$(function(){
-			$('body').delegate('#stage', 'click', function(ev){
-				var x     = ev.clientX;
-				var y     = ev.clientY;
-				var color = $('#color').val();
-				var r     = hexToR(color);
-				var g     = hexToG(color);
-				var b     = hexToB(color);
-
-				ph.push_color([x,y,r,g,b]);
-			});
+			var ph = new PixelHandler;
+			
 			$('#colorpicker').farbtastic('#color');
 			
 			$( "#dialog-message" ).dialog({	modal: true	});

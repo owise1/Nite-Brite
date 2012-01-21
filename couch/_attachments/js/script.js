@@ -4,14 +4,15 @@ function hexToB(h) {return parseInt((cutHex(h)).substring(4,6),16)}
 function cutHex(h) {return (h.charAt(0)=="#") ? h.substring(1,7):h}
 
 function PixelHandler(){
-	var db          = $.couch.db("pixels");
-	this.db         = db;
-	var max         = 10000;
-	var queue_limit = 3;
-	var colors      = [];
+	var db             = $.couch.db("pixels");
+	this.db            = db;
+	var max            = 10000;
+	var queue_limit    = 20;
+	var colors         = [];
+	var stage_selector = '#stage';
 	
 	function _get_canvas(){
-		return $('#stage')[0];
+		return $(stage_selector)[0];
 	}
 	
 	// x,y,r,g,b,timestamp,lat,lon
@@ -42,15 +43,22 @@ function PixelHandler(){
 		}
 		_color_queue.push(d);
 		if(_color_queue.length >= queue_limit){
-			this.db.bulkSave({ "docs" : _color_queue }, {
+			db.bulkSave({ "docs" : _color_queue }, {
 				error : function(response){
 
 				}
 			});
 			_color_queue = [];
+			if(typeof _gaq != 'undefined'){ // google track event
+				try{
+					_gaq.push(['_trackEvent', "save", "save", "save", queue_limit]);
+				} catch(err) { }
+			}
+			
 		}
-		colors.push(infoStr);
-		_draw_all();
+		// colors.push(infoStr);
+		_draw_color(infoStr)
+		// _draw_all();
 	}
 	this.push_color = _push_color;
 	
@@ -61,7 +69,7 @@ function PixelHandler(){
 		
 		var canvas = _get_canvas();
 		var ctx = canvas.getContext('2d');  
-		ctx.clearRect(0,0,$('#stage').attr('width'),$('#stage').height());
+		ctx.clearRect(0,0,$(stage_selector).attr('width'),$(stage_selector).height());
 		
 		$.each(colors, function(i,info){
 			// if(colors.length > max && i < colors.length - max) return;
@@ -85,12 +93,16 @@ function PixelHandler(){
 	
 	//****// init //****//
 	
+	$('#stage_holder').html('').append($("<canvas id='stage'>").attr('width', $(window).width()).attr('height', $(window).height()));
+	
+	
 	// get pixels and draw it
 	db.view("couch/pixels", {
 		reduce : false,
 		success : function(response){
 			$.each(response.rows, function(i, row){
 				colors.push(row.id);
+				// _draw_color(row.id);
 			})
 			_draw_all();
 			// _animate_10K();
@@ -121,7 +133,41 @@ function PixelHandler(){
 		});
 	}
 
+	// resize
+	$(window).resize(_draw_all).resize();
 	
+	// clicks
+	$('body').delegate(stage_selector, 'click', function(ev){
+		var x     = ev.clientX;
+		var y     = ev.clientY;
+		var color = $('#color').val();
+		var r     = hexToR(color);
+		var g     = hexToG(color);
+		var b     = hexToB(color);
+
+		_push_color([x,y,r,g,b]);
+	});
+	
+	// drawing
+	/*
+	$('body').mousedown(function(){
+		$(this).addClass('active');
+	}).mouseup(function(){
+		$(this).removeClass('active');
+	});
+	$('body').mousemove(function(ev){
+		if($(this).hasClass('active')){
+			var x     = ev.clientX;
+			var y     = ev.clientY;
+			var color = $('#color').val();
+			var r     = hexToR(color);
+			var g     = hexToG(color);
+			var b     = hexToB(color);
+
+			_push_color([x,y,r,g,b]);
+		}
+	})
+	*/
 
 	
 }
