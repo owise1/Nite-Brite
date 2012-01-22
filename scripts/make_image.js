@@ -1,19 +1,37 @@
 (function() {
-  var Drawer, cradle, db, exec, pixels, sys;
+  var Drawer, cradle, d, exec, fs, pixels, sys;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   pixels = [];
   sys = require('sys');
   exec = require('child_process').exec;
+  cradle = require('cradle');
+  fs = require('fs');
   Drawer = (function() {
-    function Drawer(pixels) {
-      var pixel, splitted, _i, _len, _ref;
-      this.pixels = pixels;
+    function Drawer() {
+      this.upload_attachment = __bind(this.upload_attachment, this);
+      this.save_image = __bind(this.save_image, this);
       this.process_batch = __bind(this.process_batch, this);
-      this.drawn = 0;
+      this.process_view = __bind(this.process_view, this);      this.drawn = 0;
       this.per_batch = 500;
       this.image_path = '/Users/Olinor/Desktop/test.png';
       this.x_max = 0;
       this.y_max = 0;
+      this.pixels = [];
+      this.db = new cradle.Connection('http://localhost', 5984, {
+        cache: true,
+        raw: false
+      }).database('pixels');
+    }
+    Drawer.prototype.go = function() {
+      return this.db.view('couch/pixels', {
+        reduce: false
+      }, this.process_view);
+    };
+    Drawer.prototype.process_view = function(err, res) {
+      var pixel, splitted, _i, _len, _ref;
+      this.pixels = res.map(function(row) {
+        return row.id;
+      });
       _ref = this.pixels;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         pixel = _ref[_i];
@@ -25,7 +43,8 @@
           this.y_max = parseInt(splitted[1]);
         }
       }
-    }
+      return this.process_batch();
+    };
     Drawer.prototype.process_batch = function() {
       var draw_point_str, pixel, sliced, splitted, str, _i, _len;
       draw_point_str = '';
@@ -40,29 +59,33 @@
       } else {
         str = "convert " + this.image_path + " -size " + this.x_max + "x" + this.y_max + " " + draw_point_str + " " + this.image_path;
       }
-      console.log(sliced.length);
       if (sliced.length > 0) {
         return exec(str, __bind(function() {
+          console.log("batch " + this.drawn);
           this.drawn++;
           return this.process_batch();
         }, this));
+      } else {
+        return this.save_image();
       }
+    };
+    Drawer.prototype.save_image = function() {
+      var d;
+      d = new Date;
+      return this.db.save({
+        timestamp: d.getTime(),
+        last_pixel_timestamp: this.pixels[this.pixels.length - 1].split(',')[5],
+        type: 'snapshot'
+      }, this.upload_attachment);
+    };
+    Drawer.prototype.upload_attachment = function(err, res) {
+      console.log(this.image_path);
+      return this.db.saveAttachment(res.id, res.rev, 'snapshot.png', 'image/png', fs.createReadStream(this.image_path), function(err, data) {
+        return console.log(data);
+      });
     };
     return Drawer;
   })();
-  cradle = require('cradle');
-  db = new cradle.Connection('http://localhost', 5984, {
-    cache: true,
-    raw: false
-  }).database('pixels');
-  db.view('couch/pixels', {
-    reduce: false,
-    descending: true
-  }, function(err, res) {
-    var d;
-    d = new Drawer(res.map(function(row) {
-      return row.id;
-    }));
-    return d.process_batch();
-  });
+  d = new Drawer;
+  d.go();
 }).call(this);
