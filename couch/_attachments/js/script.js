@@ -4,12 +4,14 @@ function hexToB(h) {return parseInt((cutHex(h)).substring(4,6),16)}
 function cutHex(h) {return (h.charAt(0)=="#") ? h.substring(1,7):h}
 
 function PixelHandler(){
-	var db             = $.couch.db("pixels");
+	var db_name        = "pixels";
+	var db             = $.couch.db(db_name);
 	this.db            = db;
 	var max            = 10000;
-	var queue_limit    = 20;
+	var queue_limit    = 6;
 	var colors         = [];
 	var stage_selector = '#stage';
+	var background_image = '';
 	
 	function _get_canvas(){
 		return $(stage_selector)[0];
@@ -69,7 +71,11 @@ function PixelHandler(){
 		
 		var canvas = _get_canvas();
 		var ctx = canvas.getContext('2d');  
-		ctx.clearRect(0,0,$(stage_selector).attr('width'),$(stage_selector).height());
+		if(background_image === ''){
+			ctx.clearRect(0,0,$(stage_selector).attr('width'),$(stage_selector).height());
+		} else {
+			$(stage_selector).css('background', "url('"+background_image+"')");
+		}
 		
 		$.each(colors, function(i,info){
 			// if(colors.length > max && i < colors.length - max) return;
@@ -95,9 +101,7 @@ function PixelHandler(){
 	
 	$('#stage_holder').html('').append($("<canvas id='stage'>").attr('width', $(window).width()).attr('height', $(window).height()));
 	
-	
-	// get pixels and draw it
-	db.view("couch/pixels", {
+	var pixels_opts = {
 		reduce : false,
 		success : function(response){
 			$.each(response.rows, function(i, row){
@@ -107,7 +111,22 @@ function PixelHandler(){
 			_draw_all();
 			// _animate_10K();
 		}
+	}
+	db.view("couch/snapshots", {
+		limit : 1,
+		descending : true,
+		success : function(response){
+			if(response.rows.length > 0){
+				var row = response.rows[0];
+				pixels_opts.startkey = row.key;
+				background_image = "/"+db_name+"/"+row.id+"/"+row.value;
+			}
+			// get pixels and draw it
+			db.view("couch/pixels", pixels_opts);
+		}
 	})
+	
+	
 	
 	// changes
 	this.db.changes().onChange(function(data){

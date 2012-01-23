@@ -72,7 +72,5 @@ class Drawer
 		)
 	
 		
-		
-		
 d = new Drawer		
 d.go()
